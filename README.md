@@ -22,7 +22,7 @@ The tool performs the following actions:
 
 1. Reads your `Products.json` file to identify your favorited products
 2. Updates the `DiscoveredProducts` list to only include favorited products
-3. Updates the `ListedProducts` list to only include favorited products
+3. Filters the `ListedProducts` list to keep only favorited products from your existing list
 4. Keeps only the `MixRecipes` that involve your favorited products
 5. Keeps only the `ProductPrices` entries for your favorited products
 6. Deletes all non-favorited product files from the `CreatedProducts` folder

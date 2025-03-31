@@ -117,8 +117,9 @@ function Clean-Products {
         # Update DiscoveredProducts to only include favorited products
         $productsJson.DiscoveredProducts = $favoritedProducts
         
-        # Update ListedProducts to match favorited products
-        $productsJson.ListedProducts = $favoritedProducts
+        # Update ListedProducts to keep only favorited products from the existing list
+        $filteredListedProducts = $productsJson.ListedProducts | Where-Object { $favoritedProducts -contains $_ }
+        $productsJson.ListedProducts = $filteredListedProducts
         
         # Filter MixRecipes to only include recipes involving favorited products
         $filteredRecipes = $productsJson.MixRecipes | Where-Object {
