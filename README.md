@@ -1,12 +1,12 @@
-# Schedule I Product Cleaner
+# Schedule I Product Remover
 
 A simple tool to clean up non-favorited products from Schedule I save games.
 
-![Schedule I Product Cleaner]
+[Schedule I Product Remover]
 
 ## Overview
 
-Schedule I Product Cleaner is a PowerShell-based utility with a graphical user interface that helps you manage your Schedule I game saves by removing all products that aren't in your favorites list. This helps declutter your game and focus only on the products you care about.
+Schedule I Product Remover is a PowerShell-based utility with a graphical user interface that helps you manage your Schedule I game saves by removing all products that aren't in your favorites list. This helps declutter your game and focus only on the products you care about.
 
 ## Features
 
