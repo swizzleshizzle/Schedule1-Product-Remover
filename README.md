@@ -1,12 +1,12 @@
-# Schedule I Product Cleaner
+# Schedule I Product Remover
 
 A simple tool to clean up non-favorited products from Schedule I save games.
 
-![Schedule I Product Cleaner]
+[Schedule I Product Remover]
 
 ## Overview
 
-Schedule I Product Cleaner is a PowerShell-based utility with a graphical user interface that helps you manage your Schedule I game saves by removing all products that aren't in your favorites list. This helps declutter your game and focus only on the products you care about.
+Schedule I Product Remover is a PowerShell-based utility with a graphical user interface that helps you manage your Schedule I game saves by removing all products that aren't in your favorites list. This helps declutter your game and focus only on the products you care about.
 
 ## Features
 
@@ -40,11 +40,12 @@ No installation required! Simply download the repository and run the included ba
 ## Usage
 
 1. Download or clone this repository
-2. Double-click the `Run-Product-Cleaner.bat` file
-3. The application will open and automatically detect your save folder
-4. Adjust the path if needed or use the Browse button to select your save folder
-5. Choose whether to create backups and/or preview changes
-6. Click "Run Cleanup" to start the process
+2. Open Schedule 1 and stay at the main menu (to bypass steam cloud overwriting your save after you make the changes)
+3. Double-click the `Run-Product-Cleaner.bat` file
+4. The application will open and automatically detect your save folder
+5. Adjust the path if needed or use the Browse button to select your save folder
+6. Choose whether to create backups and/or preview changes
+7. Click "Run Cleanup" to start the process
 
 ## Safety Features
 
