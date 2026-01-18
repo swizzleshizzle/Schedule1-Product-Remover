@@ -25,7 +25,10 @@ The tool performs the following actions:
 3. Filters the `ListedProducts` list to keep only favorited products from your existing list
 4. Keeps only the `MixRecipes` that involve your favorited products
 5. Keeps only the `ProductPrices` entries for your favorited products
-6. Deletes all non-favorited product files from the `CreatedProducts` folder
+6. Deletes all non-favorited product entries from `CreatedWeed`
+7. Deletes all non-favorited product entries from `CreatedMeth`
+8. Deletes all non-favorited product entries from `CreatedCocaine`
+9. Deletes all non-favorites product entries from `CreatedShrooms`
 
 ## Installation
 
@@ -60,7 +63,7 @@ If you encounter any issues:
 1. Make sure you're running the batch file as an administrator
 2. Check that your Schedule I save folder path is correct
 3. Verify that your `Products.json` file has at least one favorited product
-4. If all else fails, restore from the backup folder created before changes were made
+4. If all else fails, restore from the backup file created before changes were made
 
 ## License
 
