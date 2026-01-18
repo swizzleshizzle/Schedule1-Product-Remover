@@ -89,7 +89,7 @@ function Clean-Products {
             $recipeProduct = $product
             while ($true) {
                 $recipe = $productsJson.MixRecipes | Where-Object { $_.Output -eq $recipeProduct }
-                # It seems the game is inconsitent in regards to what it considers to be the
+                # It seems the game is inconsistent in regards to what it considers to be the
                 # product and the mixer, so we need to check both
                 if ($createdProducts.Contains($recipe.Product)) {
                     $allowedProducts += $recipe.Product

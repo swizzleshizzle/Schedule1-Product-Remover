@@ -28,7 +28,7 @@ The tool performs the following actions:
 6. Deletes all non-favorited product entries from `CreatedWeed`
 7. Deletes all non-favorited product entries from `CreatedMeth`
 8. Deletes all non-favorited product entries from `CreatedCocaine`
-9. Deletes all non-favorites product entries from `CreatedShrooms`
+9. Deletes all non-favorited product entries from `CreatedShrooms`
 
 ## Installation
 
