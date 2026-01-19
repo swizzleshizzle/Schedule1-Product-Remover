@@ -46,7 +46,8 @@ function Clean-Products {
     
     try {
         # Validate path
-        if (-not (Test-Path "$SaveGamePath\Products\Products.json")) {
+        $productsJsonPath = "$SaveGamePath\Products.json"
+        if (-not (Test-Path $productsJsonPath)) {
             Write-Status "Products.json not found at the specified path. Please provide the correct SaveGame path." -Type "ERROR"
             return $false
         }
@@ -54,7 +55,6 @@ function Clean-Products {
         Write-Status "Starting cleanup process..."
         
         # Read the Products.json file
-        $productsJsonPath = "$SaveGamePath\Products\Products.json"
         $productsJson = Get-Content -Path $productsJsonPath -Raw | ConvertFrom-Json
         
         # Get the list of favorited products
@@ -67,17 +67,66 @@ function Clean-Products {
         
         Write-Status "Found $($favoritedProducts.Count) favorited products"
         Write-Status "Favorited products: $($favoritedProducts -join ', ')"
+
+        # Count current number of products
+        $currentProductCount = $productsJson.DiscoveredProducts.Count
+
+        # Determine base products
+        $createdProducts = $productsJson.MixRecipes.Output
+        $baseProducts = $productsJson.DiscoveredProducts | Where-Object { $createdProducts -notcontains $_ }
+
+        Write-Status "Found $($baseProducts.Count) base products"
+        Write-Status "Base products: $($baseProducts -join ', ')"
+
+        # Determine products to keep
+        $allowedProducts = $baseProducts + $favoritedProducts
+
+        $productsToCheck = $allowedProducts
+        foreach ($product in $productsToCheck) {
+            if ($baseProducts.Contains($product)) {
+                continue
+            }
+            $recipeProduct = $product
+            while ($true) {
+                $recipe = $productsJson.MixRecipes | Where-Object { $_.Output -eq $recipeProduct }
+                # It seems the game is inconsistent in regards to what it considers to be the
+                # product and the mixer, so we need to check both
+                if ($createdProducts.Contains($recipe.Product)) {
+                    $allowedProducts += $recipe.Product
+                    $recipeProduct = $recipe.Product
+                    continue
+                }
+                if ($createdProducts.Contains($recipe.Mixer)) {
+                    $allowedProducts += $recipe.Mixer
+                    $recipeProduct = $recipe.Mixer
+                    continue
+                }
+                break
+            }
+        }
+
+        $allowedProducts = $allowedProducts | Sort-Object -Unique
         
         # Count items to be removed
-        $nonFavoritedDiscovered = $productsJson.DiscoveredProducts | Where-Object { $favoritedProducts -notcontains $_ }
-        $nonFavoritedListed = $productsJson.ListedProducts | Where-Object { $favoritedProducts -notcontains $_ }
+        $nonFavoritedDiscovered = $productsJson.DiscoveredProducts | Where-Object { $allowedProducts -notcontains $_ }
+        $nonFavoritedListed = $productsJson.ListedProducts | Where-Object { $allowedProducts -notcontains $_ }
         $nonFavoritedRecipes = $productsJson.MixRecipes | Where-Object {
-            $favoritedProducts -notcontains $_.Product -and 
-            $favoritedProducts -notcontains $_.Mixer -and 
-            $favoritedProducts -notcontains $_.Output
+            $allowedProducts -notcontains $_.Output
         }
         $nonFavoritedPrices = $productsJson.ProductPrices | Where-Object {
-            $favoritedProducts -notcontains $_.String
+            $allowedProducts -notcontains $_.String
+        }
+        $nonFavoritedCreatedWeed = $productsJson.CreatedWeed | Where-Object {
+            $allowedProducts -notcontains $_.ID
+        }
+        $nonFavoritedCreatedMeth = $productsJson.CreatedMeth | Where-Object {
+            $allowedProducts -notcontains $_.ID
+        }
+        $nonFavoritedCreatedCocaine = $productsJson.CreatedCocaine | Where-Object {
+            $allowedProducts -notcontains $_.ID
+        }
+        $nonFavoritedCreatedShrooms = $productsJson.CreatedShrooms | Where-Object {
+            $allowedProducts -notcontains $_.ID
         }
         
         Write-Status "Found items to remove:"
@@ -85,13 +134,10 @@ function Clean-Products {
         Write-Status "- $($nonFavoritedListed.Count) products from ListedProducts"
         Write-Status "- $($nonFavoritedRecipes.Count) recipes from MixRecipes"
         Write-Status "- $($nonFavoritedPrices.Count) prices from ProductPrices"
-        
-        # Check for product files to delete
-        $createdProductsPath = "$SaveGamePath\Products\CreatedProducts"
-        $productFiles = Get-ChildItem -Path $createdProductsPath -Filter "*.json"
-        $filesToDelete = $productFiles | Where-Object { $favoritedProducts -notcontains $_.BaseName }
-        
-        Write-Status "Found $($filesToDelete.Count) product files to delete"
+        Write-Status "- $($nonFavoritedCreatedWeed.Count) products from CreatedWeed"
+        Write-Status "- $($nonFavoritedCreatedMeth.Count) products from CreatedMeth"
+        Write-Status "- $($nonFavoritedCreatedCocaine.Count) products from CreatedCocaine"
+        Write-Status "- $($nonFavoritedCreatedShrooms.Count) products from CreatedShrooms"
         
         if ($PreviewOnly) {
             Write-Status "Preview mode - no changes were made." -Type "SUCCESS"
@@ -100,58 +146,50 @@ function Clean-Products {
         
         # Backup the original file if requested
         if ($BackupFiles) {
-            $backupFolder = "$SaveGamePath\Products\Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-            New-Item -ItemType Directory -Path $backupFolder -Force | Out-Null
+            $backupFile = "$SaveGamePath\Products.backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
             
             # Backup Products.json
-            Copy-Item -Path $productsJsonPath -Destination "$backupFolder\Products.json"
+            Copy-Item -Path $productsJsonPath -Destination $backupFile
             
-            # Backup product files
-            foreach ($file in $filesToDelete) {
-                Copy-Item -Path $file.FullName -Destination "$backupFolder\$($file.Name)"
-            }
-            
-            Write-Status "Created backup at $backupFolder" -Type "SUCCESS"
+            Write-Status "Created backup at $backupFile" -Type "SUCCESS"
         }
         
         # Update DiscoveredProducts to only include favorited products
-        $productsJson.DiscoveredProducts = $favoritedProducts
+        $productsJson.DiscoveredProducts = $allowedProducts
         
         # Update ListedProducts to keep only favorited products from the existing list
-        $filteredListedProducts = $productsJson.ListedProducts | Where-Object { $favoritedProducts -contains $_ }
+        $filteredListedProducts = @($productsJson.ListedProducts | Where-Object { $allowedProducts -contains $_ })
         $productsJson.ListedProducts = $filteredListedProducts
         
         # Filter MixRecipes to only include recipes involving favorited products
-        $filteredRecipes = $productsJson.MixRecipes | Where-Object {
-            $favoritedProducts -contains $_.Product -or 
-            $favoritedProducts -contains $_.Mixer -or 
-            $favoritedProducts -contains $_.Output
-        }
+        $filteredRecipes = @($productsJson.MixRecipes | Where-Object {
+            $allowedProducts -contains $_.Output
+        })
         $productsJson.MixRecipes = $filteredRecipes
         
         # Filter ProductPrices to only include favorited products
         $filteredPrices = $productsJson.ProductPrices | Where-Object {
-            $favoritedProducts -contains $_.String
+            $allowedProducts -contains $_.String
         }
         $productsJson.ProductPrices = $filteredPrices
+
+        $filteredCreatedWeed = @($productsJson.CreatedWeed | Where-Object { $allowedProducts -contains $_.ID })
+        $productsJson.CreatedWeed = $filteredCreatedWeed
+
+        $filteredCreatedMeth = @($productsJson.CreatedMeth | Where-Object { $allowedProducts -contains $_.ID })
+        $productsJson.CreatedMeth = $filteredCreatedMeth
+
+        $filteredCreatedCocaine = @($productsJson.CreatedCocaine | Where-Object { $allowedProducts -contains $_.ID })
+        $productsJson.CreatedCocaine = $filteredCreatedCocaine
+
+        $filteredCreatedShrooms = @($productsJson.CreatedShrooms | Where-Object { $allowedProducts -contains $_.ID })
+        $productsJson.CreatedShrooms = $filteredCreatedShrooms
         
         # Save the updated Products.json
         $productsJson | ConvertTo-Json -Depth 10 | Set-Content -Path $productsJsonPath
         Write-Status "Updated Products.json file" -Type "SUCCESS"
         
-        # Delete non-favorited product files
-        $deletedCount = 0
-        foreach ($file in $filesToDelete) {
-            Remove-Item $file.FullName -Force
-            $deletedCount++
-            
-            # Update UI every 10 files
-            if ($deletedCount % 10 -eq 0) {
-                Write-Status "Deleted $deletedCount of $($filesToDelete.Count) files..."
-            }
-        }
-        
-        Write-Status "Cleanup complete! Kept $($favoritedProducts.Count) favorited products and removed $($filesToDelete.Count) non-favorited product files." -Type "SUCCESS"
+        Write-Status "Cleanup complete! Kept $($allowedProducts.Count) base/favorited products and removed $($currentProductCount - $allowedProducts.Count) non-favorited products." -Type "SUCCESS"
         return $true
         
     } catch {
